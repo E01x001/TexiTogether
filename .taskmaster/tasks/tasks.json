@@ -671,7 +671,7 @@
         "dependencies": [
           "7"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -679,9 +679,10 @@
             "description": "Add new columns to the 'profiles' table in Supabase to store host's payment information required for generating deep links. This includes fields for PayPal ID, Toss bank name, and Toss account number.",
             "dependencies": [],
             "details": "Using the Supabase SQL Editor, run an ALTER TABLE command on the 'public.profiles' table. Add three new nullable text columns: 'paypal_id', 'toss_bank_name', and 'toss_account_no'. Ensure RLS policies are updated if necessary to allow users to update their own payment info.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After running the migration script, inspect the 'profiles' table schema in the Supabase dashboard to confirm the new columns exist with the correct data types. Manually try to insert/update a row with the new fields.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 2,
@@ -691,9 +692,10 @@
               1
             ],
             "details": "Create a 'PaymentSettingsScreen' accessible from the main profile/settings tab. Use TextInput components for 'paypal_id', 'toss_bank_name', and 'toss_account_no'. On 'Save', use 'supabase.from('profiles').update({...}).eq('id', user.id)' to persist the changes. Fetch and display existing data when the screen loads.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Navigate to the new payment settings screen. Enter values for each payment field and save. Reload the screen and verify the data persists. Check the 'profiles' table in Supabase to confirm the row was updated correctly for the logged-in user.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 3,
@@ -703,9 +705,10 @@
               2
             ],
             "details": "In the 'RoomDetailScreen' component, add a conditional block that checks `if (isHost && (room.status === 'in_progress' || room.status === 'completed'))`. Inside, add a TextInput for the total fare. Use a `useEffect` hook to fetch `room_members` count and the host's profile (including payment details). On fare input, calculate `fare / memberCount` and display the result.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "As a host, navigate to a completed room. Verify the settlement UI is visible. Enter a total fare of 30000 with 3 members in the room. Verify the UI displays '10000 per person'. As a non-host member, verify the settlement input UI is not visible.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 4,
@@ -713,9 +716,10 @@
             "description": "Implement helper functions to construct the deep link URLs for Toss and PayPal based on the host's payment details and the calculated split amount.",
             "dependencies": [],
             "details": "Create a new file, e.g., 'src/utils/paymentHelpers.ts'. Export two functions: `generateTossLink(amount, bank, accountNo)` and `generatePayPalLink(amount, paypalId)`. These functions will return formatted URL strings: `supertoss://send?amount=${amount}&bank=${bank}&accountNo=${accountNo}` and `https://paypal.me/${paypalId}/${amount}` respectively.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create unit tests for the helper functions. For `generateTossLink(5000, 'KB', '123')`, assert the output is 'supertoss://send?amount=5000&bank=KB&accountNo=123'. For `generatePayPalLink(45, 'testuser')`, assert the output is 'https://paypal.me/testuser/45'.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 5,
@@ -726,11 +730,13 @@
               4
             ],
             "details": "In the settlement component created in subtask 3, add two Button components. The buttons should be disabled if the host's corresponding payment details are not set. The `onPress` handler for each button will call the appropriate helper function from `paymentHelpers.ts` to get the URL, then call `Linking.openURL(url)`. Wrap the call in a try/catch block to handle cases where the app isn't installed.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "On a device with Toss/PayPal installed, as a member in a room, tap the 'Pay with Toss' button. Verify the Toss app opens with the correct amount pre-filled. Test the PayPal button similarly. Verify the buttons are disabled if the host has not configured their payment details.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           }
-        ]
+        ],
+        "updatedAt": "2025-12-29T00:30:00.000Z"
       },
       {
         "id": "10",
@@ -742,7 +748,7 @@
         "dependencies": [
           "6"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -750,9 +756,10 @@
             "description": "Add the `react-native-maps` library to the Expo project. This library is essential for rendering map components within the application.",
             "dependencies": [],
             "details": "Use the Expo CLI to install the library to ensure compatibility with the managed workflow. Run the command `npx expo install react-native-maps` in the project root directory.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After installation, run the application on both an Android emulator and an iOS simulator to ensure the project builds successfully without any new library-related errors.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 2,
@@ -762,9 +769,10 @@
               1
             ],
             "details": "Create a new API key in the Google Cloud Console with the 'Maps SDK for Android' and 'Maps SDK for iOS' APIs enabled. Add the Android key to the `android.config.googleMaps.apiKey` field in `app.json`. For iOS, add the key to `ios.config.googleMapsApiKey` in `app.json`. Follow Expo's official documentation for handling API keys securely.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Temporarily add a basic MapView component to a test screen. Verify that the map tile renders correctly on both Android and iOS devices/simulators. An error about API keys or a blank map indicates a configuration issue.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 3,
@@ -772,9 +780,10 @@
             "description": "Develop a utility file to store and retrieve predefined latitude and longitude coordinates for known start and end points, such as 'Pyeongtaek Station' and various Camp Humphreys gates.",
             "dependencies": [],
             "details": "Create a new file, e.g., `src/utils/locationCoordinates.ts`. This file will export an object or a Map where keys are the location names (matching the `start_point` and `end_point` values from the 'rooms' table, e.g., 'Pyeongtaek Station', 'Walking Gate') and values are objects containing `latitude` and `longitude`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create a unit test for the utility. Write a test case that calls the function or accesses the object with a known location name and asserts that the returned coordinates are correct and in the proper format.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 4,
@@ -785,9 +794,10 @@
               2
             ],
             "details": "In the component file for the room details screen (e.g., `src/screens/RoomDetailsScreen.tsx`), import `MapView` from `react-native-maps`. Render the component with a default initial region, perhaps centered between Pyeongtaek Station and Camp Humphreys.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Navigate to a room's detail screen. Verify that a map component is visible and interactive (e.g., can be panned and zoomed). The map should load without API key errors.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           },
           {
             "id": 5,
@@ -798,28 +808,30 @@
               4
             ],
             "details": "Within the room details screen component, retrieve the `start_point` and `end_point` strings for the current room. Use the coordinate utility from subtask 3 to get the lat/long for these locations. Import the `Marker` component from `react-native-maps`. Render two `Marker` components inside the `MapView`, passing the coordinates for the start and end points. Add titles to the markers for clarity.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Open a room with a defined 'start_point' and 'end_point'. Verify that two distinct markers appear on the map. Tap on each marker to confirm their titles correctly identify the start and end locations. Test with different rooms to ensure markers are placed dynamically.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:30:00.000Z"
           }
-        ]
+        ],
+        "updatedAt": "2025-12-29T00:30:00.000Z"
       }
     ],
     "metadata": {
       "version": "2.0.0",
-      "lastModified": "2025-12-29T00:00:00.000Z",
+      "lastModified": "2025-12-29T00:30:00.000Z",
       "taskCount": 11,
-      "completedCount": 8,
+      "completedCount": 10,
       "inProgressCount": 0,
-      "pendingCount": 3,
+      "pendingCount": 1,
       "tags": [
         "master"
       ],
       "projectStatus": {
-        "phase": "Phase 2: MVP 핵심 기능",
-        "overallProgress": "80%",
+        "phase": "Phase 3: MVP 완성",
+        "overallProgress": "95%",
         "criticalIssues": [],
-        "nextMilestone": "Task 9 완료: 정산 도우미",
+        "nextMilestone": "MVP 출시 준비",
         "blockers": []
       },
       "technicalDebt": [
