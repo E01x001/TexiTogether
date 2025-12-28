@@ -594,7 +594,7 @@
         "dependencies": [
           "7"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -602,9 +602,10 @@
             "description": "Define the schema for the `messages` table in Supabase, including columns for `id`, `room_id`, `user_id`, `content`, and `created_at`. Also, set up Row Level Security to ensure users can only read/write messages for rooms they are members of.",
             "dependencies": [],
             "details": "Use the Supabase SQL Editor to run the CREATE TABLE script. Set `room_id` as a foreign key to `rooms(id)` and `user_id` to `profiles(id)`. Enable RLS and create policies: one for SELECT for room members, and one for INSERT for room members. Update `src/types/supabase.ts` with the new table definition.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify table creation in the Supabase dashboard. Manually write test SQL to ensure foreign key constraints and RLS policies prevent unauthorized access. Confirm type generation for the new table is successful.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:00:00.000Z"
           },
           {
             "id": 2,
@@ -612,9 +613,10 @@
             "description": "Add the `react-native-gifted-chat` library to the project to provide the core chat UI components. This is a prerequisite for building the chat interface.",
             "dependencies": [],
             "details": "Run `npm install react-native-gifted-chat` or the equivalent yarn command. Ensure the dependency is correctly added to `package.json`. No further configuration is needed at this stage, only successful installation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After installation, run the application build process (`npx expo start`) to ensure the new dependency does not introduce any build-time conflicts or errors.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:00:00.000Z"
           },
           {
             "id": 3,
@@ -624,9 +626,10 @@
               2
             ],
             "details": "In `src/screens/RoomDetailsScreen.tsx`, import and render a new `ChatView` component. Create the `src/components/ChatView.tsx` file. This component will render the `<GiftedChat />` element. Pass the current authenticated user and an empty `messages` array as initial props to display the input bar and message area.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Navigate to the Room Details screen in the app. Verify that the Gifted Chat UI (input bar, empty message area) renders correctly within the screen layout without causing errors.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:00:00.000Z"
           },
           {
             "id": 4,
@@ -637,9 +640,10 @@
               3
             ],
             "details": "In the `ChatView` component, use a `useEffect` hook to fetch initial messages from the `messages` table where `room_id` matches the current room. Following existing patterns from the Room Listing screen, use `supabase.channel('public:messages').on(...)` to listen for new inserts filtered by `room_id`. Update the component's state to re-render the `GiftedChat` component with new messages.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "With the app open on the chat screen, manually insert a new row into the `messages` table via the Supabase SQL Editor. Verify the new message appears in the app's chat view instantly without a manual refresh.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:00:00.000Z"
           },
           {
             "id": 5,
@@ -649,11 +653,13 @@
               4
             ],
             "details": "Implement the `onSend` prop function for the `<GiftedChat />` component. This function will receive the new message data from the UI. From this, construct a new record containing the `room_id` from props, `user_id` from the current session, and the message `content`. Use `supabase.from('messages').insert(...)` to save the record to the database.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "In the app, type and send a message. Verify it appears instantly in the UI (confirming the real-time loop). Check the `messages` table in the Supabase dashboard to confirm the new row was created with the correct `room_id`, `user_id`, and `content`.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-29T00:00:00.000Z"
           }
-        ]
+        ],
+        "updatedAt": "2025-12-29T00:00:00.000Z"
       },
       {
         "id": "9",
@@ -801,19 +807,19 @@
     ],
     "metadata": {
       "version": "2.0.0",
-      "lastModified": "2025-12-28T23:19:58.005Z",
+      "lastModified": "2025-12-29T00:00:00.000Z",
       "taskCount": 11,
-      "completedCount": 7,
+      "completedCount": 8,
       "inProgressCount": 0,
-      "pendingCount": 4,
+      "pendingCount": 3,
       "tags": [
         "master"
       ],
       "projectStatus": {
         "phase": "Phase 2: MVP 핵심 기능",
-        "overallProgress": "70%",
+        "overallProgress": "80%",
         "criticalIssues": [],
-        "nextMilestone": "Task 8 완료: 실시간 채팅",
+        "nextMilestone": "Task 9 완료: 정산 도우미",
         "blockers": []
       },
       "technicalDebt": [
