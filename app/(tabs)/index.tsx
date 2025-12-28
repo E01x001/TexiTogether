@@ -225,42 +225,53 @@ export default function RoomListScreen() {
     const canJoin = !item.is_member && !isFull;
 
     return (
-      <ThemedView style={styles.roomCard}>
-        <ThemedText type="subtitle" style={styles.routeText}>
-          {item.start_point} → {item.end_point}
-        </ThemedText>
-        <ThemedText style={styles.timeText}>
-          {new Date(item.departure_time).toLocaleString('ko-KR', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </ThemedText>
-        <ThemedText style={styles.capacityText}>
-          인원: {item.participant_count || 0}/{item.capacity}명
-        </ThemedText>
+      <TouchableOpacity
+        onPress={() => router.push(`/room/${item.id}`)}
+        activeOpacity={0.7}
+      >
+        <ThemedView style={styles.roomCard}>
+          <ThemedText type="subtitle" style={styles.routeText}>
+            {item.start_point} → {item.end_point}
+          </ThemedText>
+          <ThemedText style={styles.timeText}>
+            {new Date(item.departure_time).toLocaleString('ko-KR', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </ThemedText>
+          <ThemedText style={styles.capacityText}>
+            인원: {item.participant_count || 0}/{item.capacity}명
+          </ThemedText>
 
-        {item.is_member ? (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.leaveButton]}
-            onPress={() => handleLeaveRoom(item.id)}
-          >
-            <ThemedText style={styles.leaveButtonText}>퇴장</ThemedText>
-          </TouchableOpacity>
-        ) : isFull ? (
-          <ThemedView style={[styles.actionButton, styles.fullButton]}>
-            <ThemedText style={styles.fullButtonText}>정원 마감</ThemedText>
-          </ThemedView>
-        ) : (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.joinButton]}
-            onPress={() => handleJoinRoom(item.id)}
-          >
-            <ThemedText style={styles.joinButtonText}>참가</ThemedText>
-          </TouchableOpacity>
-        )}
-      </ThemedView>
+          {item.is_member ? (
+            <TouchableOpacity
+              style={[styles.actionButton, styles.leaveButton]}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleLeaveRoom(item.id);
+              }}
+            >
+              <ThemedText style={styles.leaveButtonText}>퇴장</ThemedText>
+            </TouchableOpacity>
+          ) : isFull ? (
+            <ThemedView style={[styles.actionButton, styles.fullButton]}>
+              <ThemedText style={styles.fullButtonText}>정원 마감</ThemedText>
+            </ThemedView>
+          ) : (
+            <TouchableOpacity
+              style={[styles.actionButton, styles.joinButton]}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleJoinRoom(item.id);
+              }}
+            >
+              <ThemedText style={styles.joinButtonText}>참가</ThemedText>
+            </TouchableOpacity>
+          )}
+        </ThemedView>
+      </TouchableOpacity>
     );
   };
 

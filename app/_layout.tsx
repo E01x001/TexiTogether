@@ -19,6 +19,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="create-room" options={{ presentation: 'modal', title: '방 만들기' }} />
+        <Stack.Screen name="room/[id]" options={{ title: '방 상세' }} />
         <Stack.Screen name="auth/sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="auth/verify-otp" options={{ title: 'Verify OTP' }} />
       </Stack>
