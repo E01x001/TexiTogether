@@ -517,7 +517,7 @@
         "dependencies": [
           "6"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -525,9 +525,10 @@
             "description": "Create two SQL functions, `join_room` and `leave_room`, and expose them as RPCs in the Supabase backend. These functions will handle the core logic of adding or removing a user from a room's member list.",
             "dependencies": [],
             "details": "In the Supabase SQL Editor, define `join_room(room_id_arg UUID)` which checks room capacity against current member count before inserting into `room_members`. Also define `leave_room(room_id_arg UUID)` which deletes the current user's entry from `room_members` for the specified room. Ensure both functions use `auth.uid()` to identify the user.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Use the Supabase SQL Editor to call the functions directly with test data. For `join_room`, test joining a valid room, a full room, and a room the user is already in. For `leave_room`, test leaving a room the user is a member of.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:19:58.005Z"
           },
           {
             "id": 2,
@@ -535,9 +536,10 @@
             "description": "Modify the client-side data fetching service to determine if the currently authenticated user is a member of each room being displayed.",
             "dependencies": [],
             "details": "Update the Supabase query used to fetch the list of rooms. Use a LEFT JOIN with the `room_members` table on `room_id` and filter by the current user's ID (`auth.uid()`). Project a new boolean field, e.g., `is_member`, which is true if a corresponding entry in `room_members` exists for the user.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After implementing the query, log the fetched room data to the console and verify that the `is_member` flag is correctly set to `true` for rooms the user has joined and `false` for rooms they have not.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:19:58.005Z"
           },
           {
             "id": 3,
@@ -547,9 +549,10 @@
               2
             ],
             "details": "Edit the React Native component that renders each room in the list. Use the `is_member` boolean (from subtask 2) and the room's `capacity` vs `participant_count` to display the correct button. Logic: If `is_member` is true, show 'Leave'. If false and `participant_count < capacity`, show 'Join'. If false and `participant_count >= capacity`, show a disabled 'Full' button or hide the join button.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually inspect the UI to confirm the correct button ('Join', 'Leave', or 'Full') is displayed for different rooms based on pre-seeded database states representing various scenarios (user is in room, room is available, room is full).",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:19:58.005Z"
           },
           {
             "id": 4,
@@ -560,9 +563,10 @@
               3
             ],
             "details": "In the room list item component, implement the `onPress` handlers. The 'Join' button should call `supabase.rpc('join_room', { room_id_arg: room.id })`. The 'Leave' button should call `supabase.rpc('leave_room', { room_id_arg: room.id })`. Implement loading states and show alerts for success or error (e.g., 'Failed to join: Room is full').",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "As a test user, tap the 'Join' button on an available room and verify the user is added to `room_members` in the database. Then, tap the 'Leave' button and verify the user is removed. Test joining a full room and confirm an error is handled gracefully.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:19:58.005Z"
           },
           {
             "id": 5,
@@ -572,11 +576,13 @@
               4
             ],
             "details": "In the main screen that displays the room list, set up a Supabase Realtime subscription to all INSERT and DELETE events on the `public.room_members` table. When a payload is received, identify the affected `room_id` and update the local state for that room, either by re-fetching its data or by incrementing/decrementing the participant count directly.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Open the app on two devices/simulators with two different users (User A and User B). Have User B join a room created by User A. Verify that the participant count on User A's screen updates in real-time. Then, have User B leave the room and verify the count decrements on User A's screen.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:19:58.005Z"
           }
-        ]
+        ],
+        "updatedAt": "2025-12-28T23:19:58.005Z"
       },
       {
         "id": "8",
@@ -795,19 +801,19 @@
     ],
     "metadata": {
       "version": "2.0.0",
-      "lastModified": "2025-12-28T23:05:12.607Z",
+      "lastModified": "2025-12-28T23:19:58.005Z",
       "taskCount": 11,
-      "completedCount": 6,
+      "completedCount": 7,
       "inProgressCount": 0,
-      "pendingCount": 5,
+      "pendingCount": 4,
       "tags": [
         "master"
       ],
       "projectStatus": {
         "phase": "Phase 2: MVP 핵심 기능",
-        "overallProgress": "60%",
+        "overallProgress": "70%",
         "criticalIssues": [],
-        "nextMilestone": "Task 7 완료: 방 참가/퇴장 로직",
+        "nextMilestone": "Task 8 완료: 실시간 채팅",
         "blockers": []
       },
       "technicalDebt": [

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, ActivityIndicator, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, FlatList, ActivityIndicator, View, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,6 +14,8 @@ interface Room {
   capacity: number;
   status: 'recruiting' | 'full' | 'in_progress' | 'completed';
   host_id: string;
+  participant_count?: number;
+  is_member?: boolean;
 }
 
 export default function RoomListScreen() {
@@ -22,9 +24,15 @@ export default function RoomListScreen() {
 
   useEffect(() => {
     fetchRooms();
+    let currentUserId: string | null = null;
 
-    // Set up Realtime subscription
-    const channel = supabase
+    // Get current user ID for real-time updates
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      currentUserId = user?.id || null;
+    });
+
+    // Subscribe to rooms table changes
+    const roomsChannel = supabase
       .channel('public:rooms')
       .on(
         'postgres_changes',
@@ -32,33 +40,46 @@ export default function RoomListScreen() {
           event: '*',
           schema: 'public',
           table: 'rooms',
-          filter: 'status=eq.recruiting',
         },
-        (payload) => {
-          console.log('Realtime event:', payload);
+        async (payload) => {
+          console.log('Rooms event:', payload);
 
           if (payload.eventType === 'INSERT') {
-            setRooms((current) => {
-              // Avoid duplicates
-              if (current.find((room) => room.id === payload.new.id)) {
-                return current;
-              }
-              return [...current, payload.new as Room].sort(
-                (a, b) =>
-                  new Date(a.departure_time).getTime() -
-                  new Date(b.departure_time).getTime()
-              );
-            });
+            // Fetch full room data with participant count
+            const { data } = await supabase
+              .from('rooms')
+              .select('*, room_members(count)')
+              .eq('id', payload.new.id)
+              .single();
+
+            if (data && data.status === 'recruiting') {
+              setRooms((current) => {
+                if (current.find((room) => room.id === data.id)) {
+                  return current;
+                }
+                return [
+                  ...current,
+                  {
+                    ...data,
+                    participant_count: data.room_members?.[0]?.count || 0,
+                    is_member: false,
+                    room_members: undefined,
+                  },
+                ].sort(
+                  (a, b) =>
+                    new Date(a.departure_time).getTime() -
+                    new Date(b.departure_time).getTime()
+                );
+              });
+            }
           } else if (payload.eventType === 'UPDATE') {
             setRooms((current) => {
               const updatedRoom = payload.new as Room;
-              // Remove room if status changed from recruiting
               if (updatedRoom.status !== 'recruiting') {
                 return current.filter((room) => room.id !== updatedRoom.id);
               }
-              // Update existing room
               return current.map((room) =>
-                room.id === updatedRoom.id ? updatedRoom : room
+                room.id === updatedRoom.id ? { ...room, ...updatedRoom } : room
               );
             });
           } else if (payload.eventType === 'DELETE') {
@@ -68,23 +89,102 @@ export default function RoomListScreen() {
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
+    // Subscribe to room_members table changes for real-time participant updates
+    const membersChannel = supabase
+      .channel('public:room_members')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'room_members',
+        },
+        async (payload) => {
+          console.log('Room members event:', payload);
+
+          const roomId =
+            payload.eventType === 'DELETE'
+              ? payload.old.room_id
+              : payload.new.room_id;
+
+          // Fetch updated participant count
+          const { count } = await supabase
+            .from('room_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('room_id', roomId);
+
+          const participantCount = count || 0;
+
+          setRooms((current) =>
+            current.map((room) => {
+              if (room.id === roomId) {
+                const isMember =
+                  payload.eventType === 'INSERT' &&
+                  payload.new.user_id === currentUserId
+                    ? true
+                    : payload.eventType === 'DELETE' &&
+                      payload.old.user_id === currentUserId
+                    ? false
+                    : room.is_member;
+
+                return {
+                  ...room,
+                  participant_count: participantCount,
+                  is_member: isMember,
+                };
+              }
+              return room;
+            })
+          );
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(roomsChannel);
+      supabase.removeChannel(membersChannel);
     };
   }, []);
 
   async function fetchRooms() {
     try {
-      const { data, error } = await supabase
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Get rooms with member count
+      const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
-        .select('*')
+        .select(`
+          *,
+          room_members(count)
+        `)
         .eq('status', 'recruiting')
         .order('departure_time', { ascending: true });
 
-      if (error) throw error;
+      if (roomsError) throw roomsError;
 
-      setRooms(data || []);
+      // Get user's memberships if user is authenticated
+      let memberships: { room_id: string }[] = [];
+      if (user) {
+        const { data: memberData, error: memberError } = await supabase
+          .from('room_members')
+          .select('room_id')
+          .eq('user_id', user.id);
+
+        if (memberError) throw memberError;
+        memberships = memberData || [];
+      }
+
+      // Merge data
+      const roomsWithMembership = (roomsData || []).map((room: any) => ({
+        ...room,
+        participant_count: room.room_members?.[0]?.count || 0,
+        is_member: memberships.some((m) => m.room_id === room.id),
+        room_members: undefined, // Remove nested data
+      }));
+
+      setRooms(roomsWithMembership);
     } catch (error) {
       console.error('Error fetching rooms:', error);
     } finally {
@@ -92,24 +192,77 @@ export default function RoomListScreen() {
     }
   }
 
-  const renderRoomItem = ({ item }: { item: Room }) => (
-    <ThemedView style={styles.roomCard}>
-      <ThemedText type="subtitle" style={styles.routeText}>
-        {item.start_point} → {item.end_point}
-      </ThemedText>
-      <ThemedText style={styles.timeText}>
-        {new Date(item.departure_time).toLocaleString('ko-KR', {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-      </ThemedText>
-      <ThemedText style={styles.capacityText}>
-        정원: {item.capacity}명
-      </ThemedText>
-    </ThemedView>
-  );
+  const handleJoinRoom = async (roomId: string) => {
+    try {
+      const { error } = await supabase.rpc('join_room', { p_room_id: roomId });
+
+      if (error) throw error;
+
+      Alert.alert('성공', '방에 참가했습니다!');
+      fetchRooms(); // Refresh room list
+    } catch (error: any) {
+      console.error('Error joining room:', error);
+      Alert.alert('오류', error.message || '방 참가에 실패했습니다.');
+    }
+  };
+
+  const handleLeaveRoom = async (roomId: string) => {
+    try {
+      const { error } = await supabase.rpc('leave_room', { p_room_id: roomId });
+
+      if (error) throw error;
+
+      Alert.alert('성공', '방에서 나갔습니다.');
+      fetchRooms(); // Refresh room list
+    } catch (error: any) {
+      console.error('Error leaving room:', error);
+      Alert.alert('오류', error.message || '방 퇴장에 실패했습니다.');
+    }
+  };
+
+  const renderRoomItem = ({ item }: { item: Room }) => {
+    const isFull = (item.participant_count || 0) >= item.capacity;
+    const canJoin = !item.is_member && !isFull;
+
+    return (
+      <ThemedView style={styles.roomCard}>
+        <ThemedText type="subtitle" style={styles.routeText}>
+          {item.start_point} → {item.end_point}
+        </ThemedText>
+        <ThemedText style={styles.timeText}>
+          {new Date(item.departure_time).toLocaleString('ko-KR', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </ThemedText>
+        <ThemedText style={styles.capacityText}>
+          인원: {item.participant_count || 0}/{item.capacity}명
+        </ThemedText>
+
+        {item.is_member ? (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.leaveButton]}
+            onPress={() => handleLeaveRoom(item.id)}
+          >
+            <ThemedText style={styles.leaveButtonText}>퇴장</ThemedText>
+          </TouchableOpacity>
+        ) : isFull ? (
+          <ThemedView style={[styles.actionButton, styles.fullButton]}>
+            <ThemedText style={styles.fullButtonText}>정원 마감</ThemedText>
+          </ThemedView>
+        ) : (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.joinButton]}
+            onPress={() => handleJoinRoom(item.id)}
+          >
+            <ThemedText style={styles.joinButtonText}>참가</ThemedText>
+          </TouchableOpacity>
+        )}
+      </ThemedView>
+    );
+  };
 
   const renderEmptyState = () => (
     <ThemedView style={styles.emptyContainer}>
@@ -200,6 +353,37 @@ const styles = StyleSheet.create({
   capacityText: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  actionButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  joinButton: {
+    backgroundColor: '#007AFF',
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  leaveButton: {
+    backgroundColor: '#FF3B30',
+  },
+  leaveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  fullButton: {
+    backgroundColor: 'rgba(128, 128, 128, 0.3)',
+  },
+  fullButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.6,
   },
   emptyContainer: {
     flex: 1,
