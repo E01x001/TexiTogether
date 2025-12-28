@@ -1,0 +1,856 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Initialize Expo Project and Integrate Supabase",
+        "description": "Set up a new Expo (React Native) project for 'Taxi Together'. Install and configure the Supabase JavaScript client to connect to the Supabase backend.",
+        "details": "Use the Expo CLI to create a new managed workflow project: `npx create-expo-app TaxiTogether`. Install the Supabase client library: `npm install @supabase/supabase-js`. Create a configuration file (e.g., `src/lib/supabase.js`) to initialize the Supabase client with the project URL and anon key from the Supabase dashboard. This file will export a singleton client instance to be used throughout the app.",
+        "testStrategy": "Verify successful project creation by running the app on a simulator/device. Write a simple test script or a component that attempts to connect to Supabase and fetches a test table to confirm the connection is established without errors.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize New Expo Project 'TaxiTogether'",
+            "description": "Create a new managed workflow Expo project using the Expo CLI. This will form the foundational structure for the entire mobile application.",
+            "dependencies": [],
+            "details": "Execute the command `npx create-expo-app TaxiTogether` in your terminal. When prompted, select a template, preferably the 'Blank (TypeScript)' template for a clean start with static typing. After creation, navigate into the new `TaxiTogether` directory.",
+            "status": "done",
+            "testStrategy": "Run `npx expo start` within the newly created project directory. Verify that the Metro Bundler starts correctly and that the application can be successfully launched on a simulator or physical device via the Expo Go app.",
+            "updatedAt": "2025-12-28T20:50:25.373Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Install Supabase Client and Supporting Libraries",
+            "description": "Install the core Supabase JavaScript library and other necessary packages required for it to function correctly within the React Native environment, specifically for handling session persistence.",
+            "dependencies": [
+              1
+            ],
+            "details": "In the project root directory, run the command `npm install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill`. This will add the Supabase client, secure storage for authentication tokens, and a polyfill for URL handling.",
+            "status": "done",
+            "testStrategy": "Review the `package.json` file to confirm that `@supabase/supabase-js`, `@react-native-async-storage/async-storage`, and `react-native-url-polyfill` are listed under dependencies. The application should still build and run without errors after the installation.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T20:50:56.347Z"
+          },
+          {
+            "id": 3,
+            "title": "Configure Environment Variables for Supabase Credentials",
+            "description": "Create a `.env` file to securely store the Supabase Project URL and Anon Key. This prevents hardcoding sensitive credentials directly in the source code, which is a critical security practice.",
+            "dependencies": [
+              2
+            ],
+            "details": "Create a new file named `.env` in the project's root directory. Add two entries: `EXPO_PUBLIC_SUPABASE_URL='your_supabase_project_url'` and `EXPO_PUBLIC_SUPABASE_ANON_KEY='your_supabase_anon_key'`. Replace the placeholder values with your actual Supabase credentials. Ensure the `.env` file is added to your `.gitignore` file to prevent it from being committed to version control.",
+            "status": "done",
+            "testStrategy": "In the main `App.tsx` file, temporarily add `console.log(process.env.EXPO_PUBLIC_SUPABASE_URL)`. Run the app and check the terminal or console output to verify that the URL value is logged correctly and is not `undefined`. Remove the console log after verification.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T20:52:32.508Z"
+          },
+          {
+            "id": 4,
+            "title": "Create Supabase Client Singleton Configuration",
+            "description": "Develop a dedicated file to initialize and export a single, reusable instance of the Supabase client. This singleton pattern ensures a consistent client configuration throughout the app.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Create a new directory `src/lib`. Inside this directory, create a file named `supabase.ts`. In this file, import `createClient` from `@supabase/supabase-js`, `AsyncStorage` from `@react-native-async-storage/async-storage`, and `'react-native-url-polyfill/auto'`. Initialize the client using the environment variables and provide AsyncStorage in the options for session persistence. Export the initialized client as a constant.",
+            "status": "done",
+            "testStrategy": "Attempt to import the newly created Supabase client instance into the main `App.tsx` file. The application should compile and run without any runtime errors or crashes, indicating that the client was initialized correctly.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T20:54:58.337Z"
+          },
+          {
+            "id": 5,
+            "title": "Verify Supabase Connection with a Test Query",
+            "description": "Implement a simple test function within a component to perform a basic Supabase query, confirming that the application can successfully communicate with the Supabase backend.",
+            "dependencies": [
+              4
+            ],
+            "details": "In `App.tsx`, use a `useEffect` hook to execute an asynchronous function that attempts to fetch data from a Supabase table (e.g., `supabase.from('profiles').select('*').limit(1)`). Use a `useState` hook to store the connection status. Display a 'Connection Successful' or 'Connection Failed' message on the screen based on the outcome of the query.",
+            "status": "done",
+            "testStrategy": "Run the application and observe the UI. The screen should display a 'Connection Successful' message. If it shows 'Connection Failed', inspect the console for error messages from Supabase, which will help debug issues related to RLS, API keys, or network connectivity.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T21:25:38.888Z"
+          }
+        ],
+        "updatedAt": "2025-12-28T21:25:38.888Z"
+      },
+      {
+        "id": "2",
+        "title": "Implement Supabase Database Schema",
+        "description": "Create the required database tables in Supabase as per the PRD: `profiles`, `rooms`, and `room_members`. Define columns, data types, and relationships.",
+        "details": "Using the Supabase SQL Editor or GUI, create the following tables:\n1. `profiles`: columns for `id` (references `auth.users`), `full_name` (text), `affiliation` (enum: 'Mil', 'KATUSA', 'Civilian'), `dod_id` (text, optional), `verification_status` (enum: 'unverified', 'pending', 'verified'), `id_card_url` (text), `phone_number` (text).\n2. `rooms`: columns for `id` (uuid, primary key), `created_at`, `start_point` (text), `end_point` (text), `departure_time` (timestamp with time zone), `capacity` (int, default 4), `status` (enum: 'recruiting', 'full', 'in_progress', 'completed'), `host_id` (references `profiles.id`).\n3. `room_members`: junction table with columns for `room_id` (references `rooms.id`) and `user_id` (references `profiles.id`). Set up primary keys and foreign key constraints appropriately. Enable Row Level Security (RLS) for all tables.",
+        "testStrategy": "Manually inspect the schema in the Supabase dashboard. Write SQL queries to insert and select data from each table to ensure relationships and constraints (e.g., foreign keys) work as expected. Test RLS policies to confirm users can only access permitted data.",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Custom SQL ENUM Types",
+            "description": "Create the custom enumeration types required for the 'profiles' and 'rooms' tables. This is a prerequisite for creating the tables that use these types.",
+            "dependencies": [],
+            "details": "Using the Supabase SQL Editor, execute `CREATE TYPE` statements for three new types: 1. `affiliation` as ENUM ('Mil', 'KATUSA', 'Civilian'). 2. `verification_status` as ENUM ('unverified', 'pending', 'verified'). 3. `room_status` as ENUM ('recruiting', 'full', 'in_progress', 'completed').",
+            "status": "done",
+            "testStrategy": "After execution, navigate to the 'Database' > 'Types' section in the Supabase dashboard and confirm that all three custom types are listed with their correct values.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Create the 'profiles' Table",
+            "description": "Create the `profiles` table to store user-specific information, extending the built-in `auth.users` table. This table will hold public profile data for each user.",
+            "dependencies": [
+              1
+            ],
+            "details": "In the Supabase SQL Editor, write a `CREATE TABLE` statement for `public.profiles`. Columns should include: `id` (UUID, primary key, with a foreign key constraint to `auth.users.id` with `on delete cascade`), `full_name` (text), `affiliation` (using the `affiliation` type), `dod_id` (text, nullable), `verification_status` (using the `verification_status` type, with default 'unverified'), `id_card_url` (text), `phone_number` (text), and `created_at` (timestamptz).",
+            "status": "done",
+            "testStrategy": "Inspect the table structure in the Supabase Table Editor. Verify all columns, data types, default values, and the foreign key relationship to `auth.users`. Attempt to insert a row linked to a test user to confirm constraints.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Create the 'rooms' Table",
+            "description": "Create the `rooms` table to store information about each taxi-sharing room, including its route, time, and status.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Write a `CREATE TABLE` statement for `public.rooms`. Columns should include: `id` (UUID, primary key, default `gen_random_uuid()`), `created_at` (timestamptz, default `now()`), `start_point` (text), `end_point` (text), `departure_time` (timestamptz), `capacity` (integer, default 4), `status` (using the `room_status` type, default 'recruiting'), and `host_id` (UUID, with a foreign key constraint to `public.profiles.id`).",
+            "status": "done",
+            "testStrategy": "Inspect the table schema in the Supabase dashboard. Verify the default values for `id`, `created_at`, `capacity`, and `status`. Confirm the foreign key to `profiles.id` is correctly established.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Create the 'room_members' Junction Table",
+            "description": "Create a junction table to establish the many-to-many relationship between users (`profiles`) and rooms (`rooms`).",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Create the `public.room_members` table. Define a composite primary key on (`room_id`, `user_id`). Add two foreign key constraints: `room_id` referencing `rooms.id` with `on delete cascade`, and `user_id` referencing `profiles.id` with `on delete cascade`. Also include a `joined_at` (timestamptz) column with a default value of `now()`.",
+            "status": "done",
+            "testStrategy": "Manually insert a record linking a test user to a test room. Test the `on delete cascade` functionality by deleting a user or a room and verifying the corresponding entry in `room_members` is also removed.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Enable and Configure Row Level Security (RLS)",
+            "description": "Enable Row Level Security (RLS) for all new tables and create initial security policies to control data access based on user roles and ownership.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "For each of the three tables (`profiles`, `rooms`, `room_members`), execute `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`. Create baseline policies, such as: 1. Users can select/update their own profile. 2. Authenticated users can view all `rooms`. 3. Room members can view each other's profiles within that room.",
+            "status": "done",
+            "testStrategy": "Using the Supabase SQL Editor's role impersonation feature, run `SELECT` queries as an `anon` and `authenticated` user to verify that RLS is working. For example, confirm an authenticated user can only update their own profile (`WHERE id = auth.uid()`).",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2025-12-28T21:25:58.485Z"
+      },
+      {
+        "id": "3",
+        "title": "Implement User Authentication and Profile Creation",
+        "description": "Develop the user authentication flow using Supabase Auth, including SMS OTP for phone verification. Upon successful signup, create a corresponding entry in the `profiles` table.",
+        "details": "Use Supabase's built-in support for phone-based authentication (`supabase.auth.signInWithOtp`). Create UI screens for entering a phone number, submitting the received OTP, and setting an initial password. Upon successful verification, use a Supabase Function (Edge Function) triggered by `auth.users` insertion to create a new record in the public `profiles` table, linking it to the new user's `id`.",
+        "testStrategy": "Perform end-to-end testing of the signup flow. Use a real phone number to verify OTP delivery and acceptance. Check the `auth.users` and `profiles` tables in Supabase to confirm that user and profile records are created and linked correctly. Test edge cases like incorrect OTPs and already registered numbers.",
+        "priority": "high",
+        "dependencies": [
+          "2"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Supabase Function and Trigger for Profile Creation",
+            "description": "Create a PostgreSQL function in Supabase that automatically creates a new user profile upon successful sign-up. This function will be triggered whenever a new entry is added to the `auth.users` table.",
+            "dependencies": [],
+            "details": "Using the Supabase SQL Editor, define a function `handle_new_user()` that inserts a new row into the `public.profiles` table. The new profile's `id` should match the new user's `id`, and the `phone_number` should be populated from the user's auth record. Create a trigger `on_auth_user_created` that executes this function `AFTER INSERT ON auth.users`.\n<info added on 2025-12-28T21:55:26.705Z>\nBlocked. The Supabase project reference is needed to link the local project. This value is required to set the `EXPO_PUBLIC_SUPABASE_URL` environment variable in a local `.env` file. The anon key will also be required for `EXPO_PUBLIC_SUPABASE_ANON_KEY`.\n</info added on 2025-12-28T21:55:26.705Z>",
+            "status": "done",
+            "testStrategy": "After creating the function and trigger, manually add a test user in the Supabase dashboard's Authentication section. Verify that a corresponding row is automatically created in the `public.profiles` table with the correct `id` and `phone_number`.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T22:01:18.834Z"
+          },
+          {
+            "id": 2,
+            "title": "Develop Phone Number Input Screen",
+            "description": "Create a new UI screen for users to enter their phone number to initiate the OTP sign-in process.",
+            "dependencies": [],
+            "details": "Create a React Native component named `PhoneNumberScreen`. This screen should include a `TextInput` for the phone number (with appropriate formatting/validation) and a 'Send Code' `Button`. When pressed, the button will call `supabase.auth.signInWithOtp` with the user's phone number. On success, navigate to the OTP verification screen, passing the phone number as a parameter.",
+            "status": "done",
+            "testStrategy": "Render the screen in the app. Enter a valid phone number and press the button. Mock the `signInWithOtp` call to verify it's being called correctly. Ensure successful API calls trigger navigation to the next screen. Test UI validation for invalid phone number formats.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T22:01:44.282Z"
+          },
+          {
+            "id": 3,
+            "title": "Develop OTP Verification Screen",
+            "description": "Create a UI screen for users to enter the OTP they received via SMS to complete the authentication process.",
+            "dependencies": [
+              2
+            ],
+            "details": "Create a React Native component named `OtpVerificationScreen`. This screen will receive the phone number from the previous screen's navigation parameters. It should feature a `TextInput` for the OTP code. On submission, it will call `supabase.auth.verifyOtp` with the phone number and the provided token. Handle and display errors for incorrect OTPs.",
+            "status": "done",
+            "testStrategy": "Manually navigate to this screen with a valid phone number parameter. Enter a test OTP. Verify that `supabase.auth.verifyOtp` is called with the correct parameters. Test the UI's response to both successful and failed verification attempts.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T22:01:47.928Z"
+          },
+          {
+            "id": 4,
+            "title": "Integrate Authentication Screens into Navigation",
+            "description": "Add the newly created authentication screens to the application's navigation structure, creating a dedicated stack for unauthenticated users.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Modify the root navigator (e.g., `AppNavigator.tsx`). Create an 'AuthStack' using `createStackNavigator` that includes the `PhoneNumberScreen` and `OtpVerificationScreen`. The root navigator will conditionally render this `AuthStack` or the main `AppStack` based on the user's authentication state.",
+            "status": "done",
+            "testStrategy": "Launch the app as a logged-out user. Verify that you are presented with the `PhoneNumberScreen`. After successfully logging in (once logic is complete), verify the app switches to the main stack. Upon logout, verify it returns to the `AuthStack`.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T22:02:02.101Z"
+          },
+          {
+            "id": 5,
+            "title": "Implement Session Management and Auth State Listener",
+            "description": "Implement logic to manage the user's session by listening to Supabase auth state changes and redirecting users accordingly.",
+            "dependencies": [
+              1,
+              3,
+              4
+            ],
+            "details": "In a root component of the app (like `App.tsx`) or a dedicated context provider (`AuthProvider`), use the `supabase.auth.onAuthStateChange` listener. This listener will update a global state (e.g., in a Context or Zustand store) with the current user session. This state change will trigger the conditional navigator from the previous task to switch between the `AuthStack` and `AppStack`.",
+            "status": "done",
+            "testStrategy": "Perform a full end-to-end test. Start the app as a logged-out user, complete the phone and OTP verification steps. Verify the `onAuthStateChange` listener fires, the session is established, and the app automatically navigates to the main authenticated screen. Also test closing and reopening the app to ensure the session is persisted and restored correctly.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T22:02:05.625Z"
+          }
+        ],
+        "updatedAt": "2025-12-28T22:02:05.625Z"
+      },
+      {
+        "id": "0",
+        "title": "Fix Supabase Database Connection and Apply Migrations",
+        "description": "긴급: Supabase 프로젝트에 로컬 migration 파일을 적용하여 스키마 캐시 오류를 해결하고 데이터베이스 연결을 복구합니다.",
+        "details": "현재 로컬에 migration 파일은 존재하지만 실제 Supabase 프로젝트에 적용되지 않아 'Could not find the table public.profiles' 오류가 발생합니다. Supabase 대시보드 SQL Editor를 통해 모든 migration 파일을 순차적으로 실행하거나, Supabase CLI를 설정하여 `supabase db push` 명령으로 migration을 푸시해야 합니다. 완료 후 연결 테스트를 수행하여 profiles, rooms, room_members 테이블에 정상적으로 접근 가능한지 확인합니다.",
+        "testStrategy": "Supabase 대시보드에서 Table Editor를 열어 profiles, rooms, room_members 테이블이 올바른 스키마로 생성되었는지 확인합니다. 앱에서 `supabase.from('profiles').select('*').limit(1)` 쿼리를 실행하여 오류 없이 응답을 받는지 테스트합니다. RLS 정책이 올바르게 설정되었는지 확인합니다.",
+        "priority": "critical",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Supabase 대시보드 SQL Editor로 Migration 실행",
+            "description": "supabase/migrations/ 디렉토리의 모든 SQL 파일을 순서대로 Supabase SQL Editor에서 실행합니다.",
+            "dependencies": [],
+            "details": "01_create_enums.sql, 02_create_profiles_table.sql, 03_create_rooms_table.sql, 04_create_room_members_table.sql, 05_enable_rls.sql, 20240101000007_create_handle_new_user_function.sql 파일을 순서대로 복사하여 Supabase 대시보드의 SQL Editor에 붙여넣고 실행합니다.",
+            "status": "done",
+            "testStrategy": "각 migration 실행 후 오류 메시지가 없는지 확인하고, Table Editor에서 생성된 테이블과 타입을 확인합니다.",
+            "parentId": "0"
+          },
+          {
+            "id": 2,
+            "title": "데이터베이스 연결 테스트",
+            "description": "앱에서 Supabase 데이터베이스에 정상적으로 연결되고 테이블에 접근할 수 있는지 테스트합니다.",
+            "dependencies": [
+              1
+            ],
+            "details": "app/index.tsx 또는 임시 테스트 화면에서 supabase.from('profiles').select('*') 쿼리를 실행합니다. error.txt에 있던 오류가 해결되었는지 확인합니다.",
+            "status": "done",
+            "testStrategy": "앱을 실행하고 콘솔에서 Supabase 쿼리 결과를 확인합니다. 'Could not find the table' 오류가 더 이상 발생하지 않아야 합니다.",
+            "parentId": "0"
+          },
+          {
+            "id": 3,
+            "title": "RLS 정책 검증",
+            "description": "Row Level Security 정책이 올바르게 적용되었는지 테스트합니다.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Supabase 대시보드에서 각 테이블의 RLS 탭을 확인합니다. 인증된 사용자로 테스트 쿼리를 실행하여 정책이 올바르게 동작하는지 확인합니다.",
+            "status": "done",
+            "testStrategy": "앱에서 로그인한 사용자로 자신의 프로필을 조회하고 수정할 수 있는지 테스트합니다. 다른 사용자의 프로필을 조회/수정하려고 할 때 올바르게 차단되는지 확인합니다.",
+            "parentId": "0"
+          }
+        ],
+        "updatedAt": "2025-12-28T22:52:55.088Z"
+      },
+      {
+        "id": "4",
+        "title": "Develop Profile Management and ID Verification UI",
+        "description": "Create the user profile screen where users can input personal information (name, affiliation) and upload an ID card (CAC/DBIDS) for manual verification. Display the current verification status and badge.",
+        "details": "Build a React Native component for the profile screen. Use `expo-image-picker` to allow users to select or take a photo of their ID card. Upload the image to a Supabase Storage bucket. The image URL should be saved in the `id_card_url` column and the `verification_status` in the `profiles` table should be set to 'pending'. Conditionally render a 'Verified' badge next to the username based on the `verification_status` field.",
+        "testStrategy": "UI testing: verify that the form correctly captures and displays user input. Test the image upload functionality by selecting an image and confirming it appears in the Supabase Storage bucket and the URL is correctly saved in the `profiles` table. Manually update the `verification_status` in the database to 'verified' and confirm the 'Verified' badge appears in the UI.",
+        "priority": "medium",
+        "dependencies": [
+          "3"
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Profile Screen UI with Data Fetching",
+            "description": "Create the basic UI for the profile screen. This includes creating the file, setting up input fields for user information, and fetching the current user's profile data from Supabase to populate the fields.",
+            "dependencies": [],
+            "details": "Create a new screen component, for example at 'app/profile.tsx'. Use React Native's `<View>`, `<Text>`, and `<TextInput>` components to structure the form for 'Full Name' and 'Affiliation'. Use a `useEffect` hook to fetch the current user's data from the `profiles` table upon component mount and populate the state for the input fields.",
+            "status": "pending",
+            "testStrategy": "Verify the screen renders correctly. Confirm that on load, the input fields are populated with the correct data for the logged-in user by checking against the `profiles` table in Supabase.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Implement Profile Information Update Logic",
+            "description": "Enable users to edit their 'Full Name' and 'Affiliation' and save these changes to the Supabase database. This involves handling user input and calling the Supabase update function.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create an `updateProfile` async function that takes the new name and affiliation. This function will use `supabase.from('profiles').update({ full_name, affiliation }).eq('id', user.id)`. Attach this function to the `onPress` event of a 'Save Profile' button. Provide feedback to the user upon successful save or if an error occurs.",
+            "status": "pending",
+            "testStrategy": "Modify the text in the input fields, press 'Save', and then reload the screen or app. Verify that the new information persists. Check the `profiles` table in the Supabase dashboard to confirm the row was updated.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Integrate Expo Image Picker for ID Card Selection",
+            "description": "Add functionality to allow users to select an ID card image from their device's gallery or take a new photo using the camera. This subtask focuses only on image selection and preview.",
+            "dependencies": [
+              1
+            ],
+            "details": "Install the `expo-image-picker` library. Add a button labeled 'Upload ID'. When pressed, this button will call a function that first requests permissions using `ImagePicker.requestMediaLibraryPermissionsAsync()` and then launches `ImagePicker.launchImageLibraryAsync()`. The selected image's URI should be stored in the component's state and an `<Image>` component should be used to display a preview.",
+            "status": "pending",
+            "testStrategy": "Tap the 'Upload ID' button. Verify the device's image gallery opens. Select an image. Confirm that a preview of the selected image is displayed on the profile screen.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Implement ID Image Upload and Database Update",
+            "description": "Upload the selected ID card image to Supabase Storage. After a successful upload, update the corresponding user's record in the `profiles` table with the image's public URL and set the verification status to 'pending'.",
+            "dependencies": [
+              3
+            ],
+            "details": "Create a function to handle the upload process. It will take the local image URI from state, convert it to a format suitable for upload (e.g., FormData or base64), and use `supabase.storage.from('id-cards').upload()` to send it to a dedicated storage bucket. On success, retrieve the public URL using `supabase.storage.from('id-cards').getPublicUrl()`. Finally, update the `profiles` table, setting `id_card_url` and changing `verification_status` to 'pending'.",
+            "status": "pending",
+            "testStrategy": "After selecting an image, trigger the upload. Check the 'id-cards' bucket in Supabase Storage to see if the image file appears. Then, inspect the user's row in the `profiles` table to confirm that `id_card_url` is populated correctly and `verification_status` is 'pending'.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Display Verification Status and Conditional UI",
+            "description": "Render a visual badge or text on the profile screen that reflects the user's current `verification_status`. The UI for ID upload should also be conditionally disabled based on this status.",
+            "dependencies": [
+              1,
+              4
+            ],
+            "details": "Using the `verification_status` ('unverified', 'pending', 'verified') fetched from the user's profile, use conditional rendering in JSX to display a different component or style. For example, show a green 'Verified' badge or a yellow 'Pending' notice. The 'Upload ID' button should be disabled if the status is 'pending' or 'verified' to prevent re-uploads.",
+            "status": "pending",
+            "testStrategy": "Manually change the `verification_status` for a user in the Supabase DB to 'unverified', 'pending', and 'verified'. For each status, load the profile screen and verify that the correct badge/text is displayed and that the upload button's enabled/disabled state is correct.",
+            "parentId": "undefined"
+          }
+        ]
+      },
+      {
+        "id": "5",
+        "title": "Build Real-time Room Listing Screen",
+        "description": "Develop the main dashboard screen that displays a list of currently active taxi-sharing rooms in real-time.",
+        "details": "Create a React Native screen that subscribes to the `rooms` table using `supabase.channel('public:rooms').on(...).subscribe()`. Fetch all rooms with `status = 'recruiting'`. Use a `FlatList` component to render the list of rooms, showing key information like start/end points, departure time, and current number of participants. The list should automatically update when new rooms are created or existing rooms change state.",
+        "testStrategy": "Open two instances of the app. On one instance, manually insert a new room into the Supabase database. Verify that the new room appears instantly on the other instance's screen without a manual refresh. Test the UI's behavior with an empty list and a large number of rooms.",
+        "priority": "high",
+        "dependencies": [
+          "2",
+          "3"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Scaffold RoomListScreen and Add to Navigation",
+            "description": "Create the basic file structure for the new room listing screen and integrate it into the app's primary navigation system, ensuring it is accessible.",
+            "dependencies": [],
+            "details": "Create a new file at `src/screens/RoomListScreen.js`. Initialize it with a functional React Native component containing a placeholder `<View>` and an empty `<FlatList>`. Add this new screen to the main application navigator (e.g., TabNavigator or StackNavigator).",
+            "status": "done",
+            "testStrategy": "Run the application and navigate to the newly added screen. Verify that a blank screen renders without any errors, confirming its successful integration into the navigation stack.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Fetch and Display Initial List of Recruiting Rooms",
+            "description": "Implement the logic to fetch all rooms with a 'recruiting' status from the Supabase backend when the screen first loads.",
+            "dependencies": [
+              1
+            ],
+            "details": "In `RoomListScreen.js`, use a `useEffect` hook to trigger data fetching on component mount. Create an async function that uses the Supabase client to execute `supabase.from('rooms').select('*').eq('status', 'recruiting')`. Store the results in a state variable using `useState([])` and pass this state to the `FlatList`'s `data` prop.",
+            "status": "done",
+            "testStrategy": "Manually insert several rooms with `status = 'recruiting'` into your Supabase database. Load the `RoomListScreen` in the app and confirm that all the inserted rooms are fetched and the list is populated. Test the empty state by removing all 'recruiting' rooms.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Design and Build the RoomListItem Component",
+            "description": "Create a dedicated, reusable component to render the details of a single room within the FlatList, ensuring a consistent and clean presentation.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a new component file at `src/components/RoomListItem.js`. This component will accept a single `room` object as a prop. It should render key information such as `start_point`, `end_point`, a formatted `departure_time`, and the current number of participants.",
+            "status": "done",
+            "testStrategy": "Use a tool like Storybook or a temporary view in your app to render the `RoomListItem` component with mock `room` data. Verify that all data points are displayed correctly and the layout is acceptable for various data lengths.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Establish Supabase Real-time Channel Subscription",
+            "description": "Set up a subscription to the `rooms` table to listen for real-time database changes, such as new rooms being created or existing ones being updated.",
+            "dependencies": [
+              2
+            ],
+            "details": "Within the `useEffect` hook in `RoomListScreen.js`, use the Supabase client to establish a real-time subscription: `supabase.channel('public:rooms').on('postgres_changes', ...).subscribe()`. Implement a cleanup function in the `useEffect` to properly unsubscribe from the channel when the component unmounts.",
+            "status": "done",
+            "testStrategy": "Add `console.log()` statements inside the subscription callback. Use the Supabase SQL editor or dashboard to manually insert, update, and delete rows in the `rooms` table. Verify that the corresponding log messages appear in the app's debug console, confirming the connection is live.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Handle Real-time Payloads to Update UI State",
+            "description": "Implement the callback logic to process incoming real-time events and dynamically update the room list state, ensuring the UI reflects the database in real-time.",
+            "dependencies": [
+              4
+            ],
+            "details": "Define the callback function for the `.on()` method. Inside, use the `payload` to determine the event type (`INSERT`, `UPDATE`, `DELETE`). Update the component's room list state accordingly: add new rooms, update existing ones, or remove deleted ones. Filter to ensure only rooms with `status = 'recruiting'` are visible.",
+            "status": "done",
+            "testStrategy": "Open the app to the `RoomListScreen`. In the Supabase dashboard: 1) Insert a new room with `status = 'recruiting'` and verify it appears instantly. 2) Update a room's status to 'full' and verify it disappears. 3) Delete a room and verify it is removed. All UI changes must occur without a manual refresh.",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2025-12-28T22:57:11.906Z"
+      },
+      {
+        "id": "6",
+        "title": "Implement Room Creation Functionality",
+        "description": "Create the functionality for a user to create a new taxi-sharing room by providing details such as route, departure time, and capacity.",
+        "details": "Develop a form screen with inputs for 'Start Point' and 'End Point' (using a `Picker` with predefined locations like 'Pyeongtaek Station', 'Walking Gate', 'CPX'), a `DateTimePicker` for departure time, and a number input for capacity. On submission, call a Supabase RPC function (`create_room`) that performs a transaction: 1. Inserts a new row into the `rooms` table with the host's ID. 2. Inserts a corresponding row into the `room_members` table to add the host as the first member.",
+        "testStrategy": "As a logged-in user, fill out and submit the 'Create Room' form. Verify that a new room record appears in the `rooms` table with the correct data. Check the `room_members` table to ensure the creator is listed as a member of that new room. Verify the new room appears on the main real-time room list (Task 5).",
+        "priority": "high",
+        "dependencies": [
+          "4",
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Supabase `create_room` RPC Function",
+            "description": "Define and deploy the `create_room` SQL function in Supabase. This function will accept room details, create a new room, and add the host as the first member within a single transaction.",
+            "dependencies": [],
+            "details": "Using the Supabase SQL Editor, create a function `create_room(start_point_arg TEXT, end_point_arg TEXT, departure_time_arg TIMESTAMPTZ, capacity_arg INT)` that inserts into the `rooms` table and then inserts the `auth.uid()` into the `room_members` table with the newly created room's ID. Ensure it's a `SECURITY DEFINER` function to handle RLS.",
+            "status": "done",
+            "testStrategy": "Use the Supabase SQL Editor to call the function with sample data. Verify that a new row is created in both the `rooms` and `room_members` tables, and that the `host_id` in `rooms` and `user_id` in `room_members` match the caller's UID.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:05:12.607Z"
+          },
+          {
+            "id": 2,
+            "title": "Scaffold `CreateRoomScreen` and Add to Navigation Stack",
+            "description": "Create the initial file for the room creation screen and integrate it into the app's navigation system, making it accessible from a button on the main screen.",
+            "dependencies": [],
+            "details": "Create a new file `src/screens/CreateRoomScreen.tsx`. Add a basic component structure (e.g., a View with a title Text). Update the main navigator (e.g., `src/navigation/AppNavigator.tsx`) to include `CreateRoomScreen`. Add a button on the `HomeScreen` that navigates to this new screen.",
+            "status": "done",
+            "testStrategy": "Run the app, navigate to the main screen, and tap the newly added 'Create Room' button. Verify that the app navigates to the new, empty `CreateRoomScreen`.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:05:12.607Z"
+          },
+          {
+            "id": 3,
+            "title": "Implement Form UI with Input Components on `CreateRoomScreen`",
+            "description": "Add all necessary input fields to the `CreateRoomScreen` form, including pickers for route, a date-time picker for departure, and a numeric input for capacity.",
+            "dependencies": [
+              2
+            ],
+            "details": "In `CreateRoomScreen.tsx`, use the `@react-native-picker/picker` component for 'Start Point' and 'End Point' with predefined locations ('Pyeongtaek Station', 'Walking Gate', 'CPX'). Use `@react-native-community/datetimepicker` for departure time. Use a standard `TextInput` with `keyboardType='numeric'` for capacity. Set up `useState` hooks to manage the state of these form inputs.",
+            "status": "done",
+            "testStrategy": "Visually inspect the screen on an emulator or device to ensure all form elements render correctly. Interact with each input (pickers, date picker, text input) to confirm they update their respective state variables.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:05:12.607Z"
+          },
+          {
+            "id": 4,
+            "title": "Implement Client-Side Form Submission Logic",
+            "description": "Create the handler function that collects form data, validates it, and calls the Supabase `create_room` RPC function upon pressing the submit button.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "Create an `onSubmit` function in `CreateRoomScreen.tsx`. This function will read the values from the component's state, perform basic validation (e.g., check for empty fields), and then call `supabase.rpc('create_room', { ...args })`. Add a 'Create Room' button and link it to this `onSubmit` function. Handle loading states and potential errors from the RPC call.",
+            "status": "done",
+            "testStrategy": "With the form filled out, press the submit button. Use console logs or a debugger to verify the correct data is passed to the `supabase.rpc` call. Mock the RPC call to test error handling and loading state UI changes.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:05:12.607Z"
+          },
+          {
+            "id": 5,
+            "title": "Handle Post-Creation Navigation and User Feedback",
+            "description": "After a room is successfully created, provide feedback to the user and navigate them away from the creation form, for example, back to the room list.",
+            "dependencies": [
+              4
+            ],
+            "details": "Within the `onSubmit` function's success handler, use the navigation hook (e.g., `useNavigation`) to navigate the user away from the `CreateRoomScreen`. A `navigation.goBack()` or `navigation.navigate('RoomList')` would be appropriate. Display a toast or alert message confirming 'Room created successfully'.",
+            "status": "done",
+            "testStrategy": "Perform an end-to-end test. As a logged-in user, create a room. Verify that upon successful creation, a success message is shown and the app navigates back to the main room list screen. Check the Supabase tables (`rooms`, `room_members`) to confirm the data was inserted correctly.",
+            "parentId": "undefined",
+            "updatedAt": "2025-12-28T23:05:12.607Z"
+          }
+        ],
+        "updatedAt": "2025-12-28T23:05:12.607Z"
+      },
+      {
+        "id": "7",
+        "title": "Implement Join and Leave Room Logic",
+        "description": "Allow users to join an available room from the list and to leave a room they have previously joined.",
+        "details": "On the room list item or a dedicated room details screen, add a 'Join' button. When pressed, the app should call a Supabase RPC function (`join_room`) that checks if the room is full. If not, it adds a new entry to the `room_members` table. Similarly, implement a 'Leave' button that calls a `leave_room` function to remove the user from `room_members`. Use Supabase Realtime to update the participant count in the UI for all users viewing the room.",
+        "testStrategy": "As User A, create a room. As User B, join the room. Verify the participant count updates in real-time for both users. Verify User B can successfully leave the room, and the count decrements. Test the logic that prevents a user from joining a room that is already at full capacity.",
+        "priority": "high",
+        "dependencies": [
+          "6"
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Supabase RPC Functions for Join/Leave Room",
+            "description": "Create two SQL functions, `join_room` and `leave_room`, and expose them as RPCs in the Supabase backend. These functions will handle the core logic of adding or removing a user from a room's member list.",
+            "dependencies": [],
+            "details": "In the Supabase SQL Editor, define `join_room(room_id_arg UUID)` which checks room capacity against current member count before inserting into `room_members`. Also define `leave_room(room_id_arg UUID)` which deletes the current user's entry from `room_members` for the specified room. Ensure both functions use `auth.uid()` to identify the user.",
+            "status": "pending",
+            "testStrategy": "Use the Supabase SQL Editor to call the functions directly with test data. For `join_room`, test joining a valid room, a full room, and a room the user is already in. For `leave_room`, test leaving a room the user is a member of.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Update Room Fetching Logic to Include User Membership Status",
+            "description": "Modify the client-side data fetching service to determine if the currently authenticated user is a member of each room being displayed.",
+            "dependencies": [],
+            "details": "Update the Supabase query used to fetch the list of rooms. Use a LEFT JOIN with the `room_members` table on `room_id` and filter by the current user's ID (`auth.uid()`). Project a new boolean field, e.g., `is_member`, which is true if a corresponding entry in `room_members` exists for the user.",
+            "status": "pending",
+            "testStrategy": "After implementing the query, log the fetched room data to the console and verify that the `is_member` flag is correctly set to `true` for rooms the user has joined and `false` for rooms they have not.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Implement Conditional 'Join' and 'Leave' Buttons in the UI",
+            "description": "In the room list item component, add buttons that conditionally render based on the user's membership status and the room's capacity.",
+            "dependencies": [
+              2
+            ],
+            "details": "Edit the React Native component that renders each room in the list. Use the `is_member` boolean (from subtask 2) and the room's `capacity` vs `participant_count` to display the correct button. Logic: If `is_member` is true, show 'Leave'. If false and `participant_count < capacity`, show 'Join'. If false and `participant_count >= capacity`, show a disabled 'Full' button or hide the join button.",
+            "status": "pending",
+            "testStrategy": "Manually inspect the UI to confirm the correct button ('Join', 'Leave', or 'Full') is displayed for different rooms based on pre-seeded database states representing various scenarios (user is in room, room is available, room is full).",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Connect UI Buttons to Supabase RPC Functions",
+            "description": "Wire the 'Join' and 'Leave' buttons' `onPress` events to call the respective Supabase RPC functions and handle the responses.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "In the room list item component, implement the `onPress` handlers. The 'Join' button should call `supabase.rpc('join_room', { room_id_arg: room.id })`. The 'Leave' button should call `supabase.rpc('leave_room', { room_id_arg: room.id })`. Implement loading states and show alerts for success or error (e.g., 'Failed to join: Room is full').",
+            "status": "pending",
+            "testStrategy": "As a test user, tap the 'Join' button on an available room and verify the user is added to `room_members` in the database. Then, tap the 'Leave' button and verify the user is removed. Test joining a full room and confirm an error is handled gracefully.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Implement Realtime Updates for Participant Count",
+            "description": "Use Supabase Realtime to listen for changes on the `room_members` table and automatically update the participant count in the UI without a manual refresh.",
+            "dependencies": [
+              4
+            ],
+            "details": "In the main screen that displays the room list, set up a Supabase Realtime subscription to all INSERT and DELETE events on the `public.room_members` table. When a payload is received, identify the affected `room_id` and update the local state for that room, either by re-fetching its data or by incrementing/decrementing the participant count directly.",
+            "status": "pending",
+            "testStrategy": "Open the app on two devices/simulators with two different users (User A and User B). Have User B join a room created by User A. Verify that the participant count on User A's screen updates in real-time. Then, have User B leave the room and verify the count decrements on User A's screen.",
+            "parentId": "undefined"
+          }
+        ]
+      },
+      {
+        "id": "8",
+        "title": "Develop In-Room Real-time Chat",
+        "description": "Implement a real-time messaging feature for participants within the same room to coordinate details.",
+        "details": "Create a new `messages` table in Supabase with columns: `id`, `room_id`, `user_id`, `content`, `created_at`. In the room details screen, create a chat interface. Subscribe to real-time inserts on the `messages` table, filtering by the current `room_id`. When a user sends a message, insert a new row into the `messages` table. Use a library like `react-native-gifted-chat` for a pre-built UI.",
+        "testStrategy": "Have two users join the same room. User A sends a message. Verify it appears instantly on User B's screen. User B replies. Verify the reply appears on User A's screen. Check the `messages` table in Supabase to confirm messages are stored correctly with the proper `room_id` and `user_id`.",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create `messages` Table and RLS Policies in Supabase",
+            "description": "Define the schema for the `messages` table in Supabase, including columns for `id`, `room_id`, `user_id`, `content`, and `created_at`. Also, set up Row Level Security to ensure users can only read/write messages for rooms they are members of.",
+            "dependencies": [],
+            "details": "Use the Supabase SQL Editor to run the CREATE TABLE script. Set `room_id` as a foreign key to `rooms(id)` and `user_id` to `profiles(id)`. Enable RLS and create policies: one for SELECT for room members, and one for INSERT for room members. Update `src/types/supabase.ts` with the new table definition.",
+            "status": "pending",
+            "testStrategy": "Verify table creation in the Supabase dashboard. Manually write test SQL to ensure foreign key constraints and RLS policies prevent unauthorized access. Confirm type generation for the new table is successful.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Install and Configure `react-native-gifted-chat`",
+            "description": "Add the `react-native-gifted-chat` library to the project to provide the core chat UI components. This is a prerequisite for building the chat interface.",
+            "dependencies": [],
+            "details": "Run `npm install react-native-gifted-chat` or the equivalent yarn command. Ensure the dependency is correctly added to `package.json`. No further configuration is needed at this stage, only successful installation.",
+            "status": "pending",
+            "testStrategy": "After installation, run the application build process (`npx expo start`) to ensure the new dependency does not introduce any build-time conflicts or errors.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Integrate Basic Chat UI into Room Details Screen",
+            "description": "Create a new `ChatView` component that uses `react-native-gifted-chat` and embed it within the existing `RoomDetailsScreen`. This component will initially render the UI with mock or empty data.",
+            "dependencies": [
+              2
+            ],
+            "details": "In `src/screens/RoomDetailsScreen.tsx`, import and render a new `ChatView` component. Create the `src/components/ChatView.tsx` file. This component will render the `<GiftedChat />` element. Pass the current authenticated user and an empty `messages` array as initial props to display the input bar and message area.",
+            "status": "pending",
+            "testStrategy": "Navigate to the Room Details screen in the app. Verify that the Gifted Chat UI (input bar, empty message area) renders correctly within the screen layout without causing errors.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Fetch Messages and Subscribe to Real-time Updates",
+            "description": "Implement the logic to fetch historical messages for the current room and subscribe to the `messages` table for real-time updates using Supabase channels, displaying them in the UI.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "In the `ChatView` component, use a `useEffect` hook to fetch initial messages from the `messages` table where `room_id` matches the current room. Following existing patterns from the Room Listing screen, use `supabase.channel('public:messages').on(...)` to listen for new inserts filtered by `room_id`. Update the component's state to re-render the `GiftedChat` component with new messages.",
+            "status": "pending",
+            "testStrategy": "With the app open on the chat screen, manually insert a new row into the `messages` table via the Supabase SQL Editor. Verify the new message appears in the app's chat view instantly without a manual refresh.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Implement Message Sending Functionality",
+            "description": "Hook into the `onSend` callback of the `react-native-gifted-chat` component to insert new messages from the user into the Supabase `messages` table.",
+            "dependencies": [
+              4
+            ],
+            "details": "Implement the `onSend` prop function for the `<GiftedChat />` component. This function will receive the new message data from the UI. From this, construct a new record containing the `room_id` from props, `user_id` from the current session, and the message `content`. Use `supabase.from('messages').insert(...)` to save the record to the database.",
+            "status": "pending",
+            "testStrategy": "In the app, type and send a message. Verify it appears instantly in the UI (confirming the real-time loop). Check the `messages` table in the Supabase dashboard to confirm the new row was created with the correct `room_id`, `user_id`, and `content`.",
+            "parentId": "undefined"
+          }
+        ]
+      },
+      {
+        "id": "9",
+        "title": "Implement Settlement Helper and Payment Deep Links",
+        "description": "Create the cost-splitting calculator and generate deep links to payment apps like Toss and PayPal for easy settlement.",
+        "details": "Within a room that is 'in_progress' or 'completed', provide an input field for the host to enter the final taxi fare. On input, calculate the per-person amount (fare / number of members). Display the split amount for each member. Use the `Linking` API from React Native to construct and open deep links. Example URLs:\n- Toss: `supertoss://send?amount={amount}&bank={bank_name}&accountNo={account_number}`\n- PayPal: `https://paypal.me/{paypal_id}/{amount}`\nThe host's payment details (e.g., PayPal ID, bank info) will need to be stored in their `profiles` table.",
+        "testStrategy": "As the host, enter a fare (e.g., 20,000 KRW) in a room with 4 members. Verify the UI shows a split of 5,000 KRW per person. Click the 'Pay with Toss' or 'Pay with PayPal' button. Verify that the correct payment app opens (on a device with the app installed) with the amount pre-filled if the deep link schema supports it. Test with different numbers of members.",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update 'profiles' Table Schema for Payment Details",
+            "description": "Add new columns to the 'profiles' table in Supabase to store host's payment information required for generating deep links. This includes fields for PayPal ID, Toss bank name, and Toss account number.",
+            "dependencies": [],
+            "details": "Using the Supabase SQL Editor, run an ALTER TABLE command on the 'public.profiles' table. Add three new nullable text columns: 'paypal_id', 'toss_bank_name', and 'toss_account_no'. Ensure RLS policies are updated if necessary to allow users to update their own payment info.",
+            "status": "pending",
+            "testStrategy": "After running the migration script, inspect the 'profiles' table schema in the Supabase dashboard to confirm the new columns exist with the correct data types. Manually try to insert/update a row with the new fields.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Create UI for Managing Payment Details in User Profile",
+            "description": "Develop a new screen or section within the user's profile where they can input, view, and update their payment information (PayPal ID, Toss Bank, Toss Account Number).",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a 'PaymentSettingsScreen' accessible from the main profile/settings tab. Use TextInput components for 'paypal_id', 'toss_bank_name', and 'toss_account_no'. On 'Save', use 'supabase.from('profiles').update({...}).eq('id', user.id)' to persist the changes. Fetch and display existing data when the screen loads.",
+            "status": "pending",
+            "testStrategy": "Navigate to the new payment settings screen. Enter values for each payment field and save. Reload the screen and verify the data persists. Check the 'profiles' table in Supabase to confirm the row was updated correctly for the logged-in user.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Implement Settlement Calculator UI in Room Screen",
+            "description": "Within the room details screen, create a UI component for the host to manage settlement. This component should only be visible to the host when the room status is 'in_progress' or 'completed'. It will include a fare input field and display the calculated per-person cost.",
+            "dependencies": [
+              2
+            ],
+            "details": "In the 'RoomDetailScreen' component, add a conditional block that checks `if (isHost && (room.status === 'in_progress' || room.status === 'completed'))`. Inside, add a TextInput for the total fare. Use a `useEffect` hook to fetch `room_members` count and the host's profile (including payment details). On fare input, calculate `fare / memberCount` and display the result.",
+            "status": "pending",
+            "testStrategy": "As a host, navigate to a completed room. Verify the settlement UI is visible. Enter a total fare of 30000 with 3 members in the room. Verify the UI displays '10000 per person'. As a non-host member, verify the settlement input UI is not visible.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Create Deep Link Generation Helper Functions",
+            "description": "Implement helper functions to construct the deep link URLs for Toss and PayPal based on the host's payment details and the calculated split amount.",
+            "dependencies": [],
+            "details": "Create a new file, e.g., 'src/utils/paymentHelpers.ts'. Export two functions: `generateTossLink(amount, bank, accountNo)` and `generatePayPalLink(amount, paypalId)`. These functions will return formatted URL strings: `supertoss://send?amount=${amount}&bank=${bank}&accountNo=${accountNo}` and `https://paypal.me/${paypalId}/${amount}` respectively.",
+            "status": "pending",
+            "testStrategy": "Create unit tests for the helper functions. For `generateTossLink(5000, 'KB', '123')`, assert the output is 'supertoss://send?amount=5000&bank=KB&accountNo=123'. For `generatePayPalLink(45, 'testuser')`, assert the output is 'https://paypal.me/testuser/45'.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Integrate Deep Link Buttons into Settlement UI",
+            "description": "Add 'Pay with Toss' and 'Pay with PayPal' buttons to the settlement UI. These buttons will use the React Native Linking API to open the generated deep links.",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "In the settlement component created in subtask 3, add two Button components. The buttons should be disabled if the host's corresponding payment details are not set. The `onPress` handler for each button will call the appropriate helper function from `paymentHelpers.ts` to get the URL, then call `Linking.openURL(url)`. Wrap the call in a try/catch block to handle cases where the app isn't installed.",
+            "status": "pending",
+            "testStrategy": "On a device with Toss/PayPal installed, as a member in a room, tap the 'Pay with Toss' button. Verify the Toss app opens with the correct amount pre-filled. Test the PayPal button similarly. Verify the buttons are disabled if the host has not configured their payment details.",
+            "parentId": "undefined"
+          }
+        ]
+      },
+      {
+        "id": "10",
+        "title": "Integrate Google Maps API for Gate Locations",
+        "description": "Use the Google Maps API to visually display the start and end points (Pyeongtaek Station, Camp Humphreys gates) on a map within the room creation or details screen.",
+        "details": "Install `react-native-maps`. Obtain a Google Maps API key and configure it for both iOS and Android. On the room details screen, display a `MapView` component. Use the Geocoding API or a predefined set of coordinates to place markers for the specified `start_point` and `end_point` of the room. This provides a clear visual reference for users.",
+        "testStrategy": "Create or view a room with a defined start and end point. Verify that a map is rendered on the screen. Confirm that markers for the correct locations (e.g., Pyeongtaek Station and Walking Gate) are accurately displayed on the map. Test on both iOS and Android to ensure API key configuration is correct for both platforms.",
+        "priority": "low",
+        "dependencies": [
+          "6"
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install and Configure react-native-maps Library",
+            "description": "Add the `react-native-maps` library to the Expo project. This library is essential for rendering map components within the application.",
+            "dependencies": [],
+            "details": "Use the Expo CLI to install the library to ensure compatibility with the managed workflow. Run the command `npx expo install react-native-maps` in the project root directory.",
+            "status": "pending",
+            "testStrategy": "After installation, run the application on both an Android emulator and an iOS simulator to ensure the project builds successfully without any new library-related errors.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Obtain and Configure Google Maps API Key",
+            "description": "Obtain a Google Maps API key from the Google Cloud Platform Console and configure it for both Android and iOS platforms within the Expo project.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a new API key in the Google Cloud Console with the 'Maps SDK for Android' and 'Maps SDK for iOS' APIs enabled. Add the Android key to the `android.config.googleMaps.apiKey` field in `app.json`. For iOS, add the key to `ios.config.googleMapsApiKey` in `app.json`. Follow Expo's official documentation for handling API keys securely.",
+            "status": "pending",
+            "testStrategy": "Temporarily add a basic MapView component to a test screen. Verify that the map tile renders correctly on both Android and iOS devices/simulators. An error about API keys or a blank map indicates a configuration issue.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Create a Coordinate Mapping Utility for Key Locations",
+            "description": "Develop a utility file to store and retrieve predefined latitude and longitude coordinates for known start and end points, such as 'Pyeongtaek Station' and various Camp Humphreys gates.",
+            "dependencies": [],
+            "details": "Create a new file, e.g., `src/utils/locationCoordinates.ts`. This file will export an object or a Map where keys are the location names (matching the `start_point` and `end_point` values from the 'rooms' table, e.g., 'Pyeongtaek Station', 'Walking Gate') and values are objects containing `latitude` and `longitude`.",
+            "status": "pending",
+            "testStrategy": "Create a unit test for the utility. Write a test case that calls the function or accesses the object with a known location name and asserts that the returned coordinates are correct and in the proper format.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Integrate MapView Component into Room Details Screen",
+            "description": "Add the `MapView` component to the room details screen to display a basic map. This serves as the container for the location markers.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "In the component file for the room details screen (e.g., `src/screens/RoomDetailsScreen.tsx`), import `MapView` from `react-native-maps`. Render the component with a default initial region, perhaps centered between Pyeongtaek Station and Camp Humphreys.",
+            "status": "pending",
+            "testStrategy": "Navigate to a room's detail screen. Verify that a map component is visible and interactive (e.g., can be panned and zoomed). The map should load without API key errors.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Add Dynamic Start and End Point Markers to the Map",
+            "description": "Fetch the room's start and end points, convert them to coordinates using the utility, and display them as markers on the `MapView` component.",
+            "dependencies": [
+              3,
+              4
+            ],
+            "details": "Within the room details screen component, retrieve the `start_point` and `end_point` strings for the current room. Use the coordinate utility from subtask 3 to get the lat/long for these locations. Import the `Marker` component from `react-native-maps`. Render two `Marker` components inside the `MapView`, passing the coordinates for the start and end points. Add titles to the markers for clarity.",
+            "status": "pending",
+            "testStrategy": "Open a room with a defined 'start_point' and 'end_point'. Verify that two distinct markers appear on the map. Tap on each marker to confirm their titles correctly identify the start and end locations. Test with different rooms to ensure markers are placed dynamically.",
+            "parentId": "undefined"
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "version": "2.0.0",
+      "lastModified": "2025-12-28T23:05:12.607Z",
+      "taskCount": 11,
+      "completedCount": 6,
+      "inProgressCount": 0,
+      "pendingCount": 5,
+      "tags": [
+        "master"
+      ],
+      "projectStatus": {
+        "phase": "Phase 2: MVP 핵심 기능",
+        "overallProgress": "60%",
+        "criticalIssues": [],
+        "nextMilestone": "Task 7 완료: 방 참가/퇴장 로직",
+        "blockers": []
+      },
+      "technicalDebt": [
+        "각 화면에서 Supabase 직접 호출 - 서비스 레이어 분리 필요",
+        "전역 에러 처리 시스템 부재 (Alert만 사용)",
+        "로딩 상태 관리 개선 필요",
+        "Supabase TypeScript 타입 자동 생성 미설정",
+        "오프라인 지원 전략 없음"
+      ],
+      "upcomingPriorities": [
+        {
+          "task": "Task 5: 실시간 방 목록 화면",
+          "priority": "CRITICAL",
+          "estimatedEffort": "1주",
+          "dependencies": [
+            "Supabase migration 적용"
+          ]
+        },
+        {
+          "task": "Task 6: 방 생성 기능",
+          "priority": "HIGH",
+          "estimatedEffort": "1주",
+          "dependencies": [
+            "Task 5 완료"
+          ]
+        },
+        {
+          "task": "Task 7: 방 참가/퇴장 로직",
+          "priority": "HIGH",
+          "estimatedEffort": "1주",
+          "dependencies": [
+            "Task 6 완료"
+          ]
+        },
+        {
+          "task": "Task 4: 프로필 관리",
+          "priority": "MEDIUM",
+          "estimatedEffort": "1주",
+          "dependencies": [
+            "병렬 작업 가능"
+          ]
+        }
+      ]
+    }
+  }
+}

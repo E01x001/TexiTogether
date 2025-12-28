@@ -1,20 +1,41 @@
-# Welcome to your Expo app 👋
+# Texitogether 🚕
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+평택역 ↔ 캠프 험프리스 구간 택시 동승 매칭 플랫폼
 
-## Get started
+This is an [Expo](https://expo.dev) project for ridesharing between Pyeongtaek Station and Camp Humphreys.
 
-1. Install dependencies
+## 🚀 Get started
 
-   ```bash
-   npm install
-   ```
+### 1. Install dependencies
 
-2. Start the app
+```bash
+npm install
+```
 
-   ```bash
-   npx expo start
-   ```
+### 2. Set up environment variables
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and add your credentials
+# - Supabase URL and Keys (required)
+# - Google Maps API Key (required for maps feature)
+```
+
+See [SUPABASE_TOKEN_SETUP.md](SUPABASE_TOKEN_SETUP.md) for detailed token setup guide.
+
+### 3. Apply Supabase migrations
+
+Follow the instructions in [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) to set up your database.
+
+### 4. Start the app
+
+```bash
+npm start
+# or
+npx expo start
+```
 
 In the output, you'll find options to open the app in a
 

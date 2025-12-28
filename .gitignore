@@ -41,3 +41,41 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+# Dependency directories
+# Environment variables
+.env
+
+# Claude Code local settings (contains sensitive tokens)
+.claude/settings.local.json
+
+# Gemini settings (contains API keys)
+.gemini/settings.json
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/
+
+# Debug and error files
+error.txt
+
+# Large migration files (use individual migration files instead)
+supabase/migrations/all_migrations.sql
+supabase/migrations/COMBINED_MIGRATION.sql
