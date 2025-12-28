@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { GiftedChat, IMessage, User } from 'react-native-gifted-chat';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { supabase } from '@/src/lib/supabase';
+import { calculateSplitAmount, formatCurrency, generateTossLink, generatePayPalLink } from '@/src/utils/paymentHelpers';
+import { getCoordinates, getCenterCoordinate, getRegionDelta } from '@/src/utils/locationCoordinates';
 
 interface Room {
   id: string;
@@ -13,7 +16,15 @@ interface Room {
   departure_time: string;
   capacity: number;
   status: string;
+  host_id: string;
   participant_count?: number;
+}
+
+interface HostPaymentInfo {
+  paypal_id: string | null;
+  toss_bank_name: string | null;
+  toss_account_no: string | null;
+  full_name: string;
 }
 
 interface Message {
@@ -33,6 +44,10 @@ export default function RoomDetailsScreen() {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isHost, setIsHost] = useState(false);
+  const [hostPaymentInfo, setHostPaymentInfo] = useState<HostPaymentInfo | null>(null);
+  const [totalFare, setTotalFare] = useState('');
+  const [splitAmount, setSplitAmount] = useState(0);
 
   useEffect(() => {
     fetchRoomDetails();
@@ -97,6 +112,8 @@ export default function RoomDetailsScreen() {
 
   async function fetchRoomDetails() {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { data, error } = await supabase
         .from('rooms')
         .select('*, room_members(count)')
@@ -105,10 +122,30 @@ export default function RoomDetailsScreen() {
 
       if (error) throw error;
 
-      setRoom({
+      const roomData = {
         ...data,
         participant_count: data.room_members?.[0]?.count || 0,
-      });
+      };
+
+      setRoom(roomData);
+
+      // Check if current user is host
+      if (user && data.host_id === user.id) {
+        setIsHost(true);
+      }
+
+      // Fetch host payment information
+      const { data: hostData, error: hostError } = await supabase
+        .from('profiles')
+        .select('full_name, paypal_id, toss_bank_name, toss_account_no')
+        .eq('id', data.host_id)
+        .single();
+
+      if (hostError) {
+        console.error('Error fetching host info:', hostError);
+      } else if (hostData) {
+        setHostPaymentInfo(hostData);
+      }
     } catch (error) {
       console.error('Error fetching room details:', error);
     }
@@ -171,6 +208,82 @@ export default function RoomDetailsScreen() {
     }
   }, [id]);
 
+  // Calculate split amount when total fare changes
+  useEffect(() => {
+    if (totalFare && room?.participant_count) {
+      const fareNum = parseFloat(totalFare);
+      if (!isNaN(fareNum) && fareNum > 0) {
+        const split = calculateSplitAmount(fareNum, room.participant_count);
+        setSplitAmount(split);
+      } else {
+        setSplitAmount(0);
+      }
+    } else {
+      setSplitAmount(0);
+    }
+  }, [totalFare, room?.participant_count]);
+
+  async function handlePayWithToss() {
+    try {
+      if (!hostPaymentInfo?.toss_bank_name || !hostPaymentInfo?.toss_account_no) {
+        Alert.alert('오류', '호스트가 토스 결제 정보를 설정하지 않았습니다.');
+        return;
+      }
+
+      const link = generateTossLink(
+        splitAmount,
+        hostPaymentInfo.toss_bank_name,
+        hostPaymentInfo.toss_account_no
+      );
+
+      const supported = await Linking.canOpenURL(link);
+      if (supported) {
+        await Linking.openURL(link);
+      } else {
+        Alert.alert(
+          '토스 앱 필요',
+          '토스 앱이 설치되어 있지 않습니다. 앱스토어에서 다운로드하세요.',
+          [
+            { text: '취소', style: 'cancel' },
+            {
+              text: '다운로드',
+              onPress: () => {
+                const storeUrl = Platform.OS === 'ios'
+                  ? 'https://apps.apple.com/app/id839333328'
+                  : 'https://play.google.com/store/apps/details?id=viva.republica.toss';
+                Linking.openURL(storeUrl);
+              },
+            },
+          ]
+        );
+      }
+    } catch (error: any) {
+      console.error('Error opening Toss:', error);
+      Alert.alert('오류', '토스 앱을 열 수 없습니다.');
+    }
+  }
+
+  async function handlePayWithPayPal() {
+    try {
+      if (!hostPaymentInfo?.paypal_id) {
+        Alert.alert('오류', '호스트가 PayPal ID를 설정하지 않았습니다.');
+        return;
+      }
+
+      const link = generatePayPalLink(splitAmount, hostPaymentInfo.paypal_id);
+
+      const supported = await Linking.canOpenURL(link);
+      if (supported) {
+        await Linking.openURL(link);
+      } else {
+        Alert.alert('오류', 'PayPal 링크를 열 수 없습니다.');
+      }
+    } catch (error: any) {
+      console.error('Error opening PayPal:', error);
+      Alert.alert('오류', 'PayPal 링크를 열 수 없습니다.');
+    }
+  }
+
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -217,6 +330,106 @@ export default function RoomDetailsScreen() {
         </ThemedText>
       </ThemedView>
 
+      {/* Map Section */}
+      {(() => {
+        const startCoord = getCoordinates(room.start_point);
+        const endCoord = getCoordinates(room.end_point);
+
+        if (startCoord && endCoord) {
+          const center = getCenterCoordinate(startCoord, endCoord);
+          const delta = getRegionDelta(startCoord, endCoord);
+
+          return (
+            <View style={styles.mapContainer}>
+              <MapView
+                style={styles.map}
+                provider={PROVIDER_GOOGLE}
+                initialRegion={{
+                  ...center,
+                  ...delta,
+                }}
+              >
+                <Marker
+                  coordinate={startCoord}
+                  title={room.start_point}
+                  description="출발지"
+                  pinColor="green"
+                />
+                <Marker
+                  coordinate={endCoord}
+                  title={room.end_point}
+                  description="도착지"
+                  pinColor="red"
+                />
+              </MapView>
+            </View>
+          );
+        }
+        return null;
+      })()}
+
+      {/* Settlement Section - Only show for host or when fare is entered */}
+      {(isHost || totalFare) && (room.status === 'in_progress' || room.status === 'completed' || room.status === 'full') && (
+        <ThemedView style={styles.settlementSection}>
+          <ThemedText type="subtitle" style={styles.settlementTitle}>
+            💰 정산
+          </ThemedText>
+
+          {isHost && (
+            <ThemedView style={styles.settlementInput}>
+              <ThemedText style={styles.label}>총 택시비</ThemedText>
+              <TextInput
+                style={styles.fareInput}
+                value={totalFare}
+                onChangeText={setTotalFare}
+                placeholder="택시비를 입력하세요"
+                placeholderTextColor="#999"
+                keyboardType="number-pad"
+              />
+            </ThemedView>
+          )}
+
+          {splitAmount > 0 && (
+            <>
+              <ThemedView style={styles.splitInfo}>
+                <ThemedText style={styles.splitLabel}>1인당 금액</ThemedText>
+                <ThemedText type="subtitle" style={styles.splitAmount}>
+                  {formatCurrency(splitAmount)}
+                </ThemedText>
+              </ThemedView>
+
+              {!isHost && hostPaymentInfo && (
+                <>
+                  <ThemedText style={styles.paymentLabel}>
+                    {hostPaymentInfo.full_name}님에게 송금하기
+                  </ThemedText>
+
+                  <ThemedView style={styles.paymentButtons}>
+                    {hostPaymentInfo.toss_bank_name && hostPaymentInfo.toss_account_no && (
+                      <TouchableOpacity
+                        style={[styles.paymentButton, styles.tossButton]}
+                        onPress={handlePayWithToss}
+                      >
+                        <ThemedText style={styles.paymentButtonText}>토스로 송금</ThemedText>
+                      </TouchableOpacity>
+                    )}
+
+                    {hostPaymentInfo.paypal_id && (
+                      <TouchableOpacity
+                        style={[styles.paymentButton, styles.paypalButton]}
+                        onPress={handlePayWithPayPal}
+                      >
+                        <ThemedText style={styles.paymentButtonText}>PayPal로 송금</ThemedText>
+                      </TouchableOpacity>
+                    )}
+                  </ThemedView>
+                </>
+              )}
+            </>
+          )}
+        </ThemedView>
+      )}
+
       <View style={styles.chatContainer}>
         <GiftedChat
           messages={messages}
@@ -262,6 +475,82 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  mapContainer: {
+    height: 250,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128, 128, 128, 0.2)',
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  settlementSection: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128, 128, 128, 0.2)',
+    gap: 12,
+    backgroundColor: '#f9f9f9',
+  },
+  settlementTitle: {
+    fontSize: 18,
+  },
+  settlementInput: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  fareInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(128, 128, 128, 0.3)',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#000',
+  },
+  splitInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+  },
+  splitLabel: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  splitAmount: {
+    fontSize: 24,
+    color: '#007AFF',
+  },
+  paymentLabel: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginTop: 8,
+  },
+  paymentButtons: {
+    gap: 8,
+  },
+  paymentButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  tossButton: {
+    backgroundColor: '#0064FF',
+  },
+  paypalButton: {
+    backgroundColor: '#0070BA',
+  },
+  paymentButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   chatContainer: {
     flex: 1,
